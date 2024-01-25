@@ -6,9 +6,9 @@ build:
 
 start:
 		@{ \
-			docker compose -f ./docker/docker-compose.yaml up --build -d; \
+			docker compose -f ./docker/docker-compose.yaml up -d; \
 			echo "Waiting for MySQL to start..."; \
-			sleep 10; \
+			sleep 20; \
 			bash docker/snapshot-hub/db.sh; \
 			bash docker/snapshot-sequencer/db.sh; \
 		}
