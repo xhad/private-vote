@@ -1,0 +1,79 @@
+version: '3.8'
+
+services:
+
+  # Snapshot MySQL instance
+  snapshot-mysql:
+    platform: linux/amd64
+    container_name: snapshot-mysql
+    image: mysql:5.7
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_USER: "admin"
+      MYSQL_PASSWORD: "pwd"
+      MYSQL_ROOT_PASSWORD: "pwd"
+      MYSQL_DATABASE: "snapshot"
+    volumes:
+        - "./snapshot-hub/database/:/docker-entrypoint-initdb.d/"
+
+  # Snapshot hub
+  snapshot-hub:
+    platform: linux/arm64
+    container_name: snapshot-hub
+    build:
+      context: ../modules/snapshot-hub
+      dockerfile: ../../docker/snapshot-hub/Dockerfile
+    env_file:
+      - ./snapshot-hub/.env
+    depends_on:
+      - snapshot-mysql
+    ports:
+      - "3000:3000"
+
+  # Snapshot hub
+  snapshot-seq:
+    platform: linux/arm64
+    container_name: snapshot-seq
+    build:
+      context: ../modules/snapshot-sequencer
+      dockerfile: ../../docker/snapshot-sequencer/Dockerfile
+    env_file:
+      - ./snapshot-sequencer/.env
+
+    depends_on:
+      - snapshot-mysql
+    ports:
+      - "3001:3001"
+
+  # Redis
+  redis:
+    platform: linux/arm64
+    container_name: redis
+    image: redis
+    environment:
+      # ALLOW_EMPTY_PASSWORD is recommended only for development.
+      - ALLOW_EMPTY_PASSWORD=yes
+      - REDIS_DISABLE_COMMANDS=FLUSHDB,FLUSHALL
+    ports:
+      - 6379:6379
+    volumes:
+      - ./api/.db:/data
+    restart: always
+    entrypoint: redis-server --appendonly yes
+
+  # Score API
+  score-api:
+    platform: linux/arm64
+    container_name: score-api
+    build:
+      context: ../modules/score-api
+      dockerfile: ../../docker/score-api/Dockerfile
+    ports:
+      - "3003:3003"
+    env_file:
+      - ./score-api/.env
+
+networks:
+  default:
+    name: snapshot-network

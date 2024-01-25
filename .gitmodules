@@ -1,0 +1,12 @@
+[submodule "modules/snapshot"]
+	path = modules/snapshot
+	url = https://github.com/snapshot-labs/snapshot
+[submodule "modules/snapshot-sequencer"]
+	path = modules/snapshot-sequencer
+	url = https://github.com/snapshot-labs/snapshot-sequencer
+[submodule "modules/score-api"]
+	path = modules/score-api
+	url = https://github.com/snapshot-labs/score-api
+[submodule "modules/snapshot-hub"]
+	path = modules/snapshot-hub
+	url = https://github.com/snapshot-labs/snapshot-hub
