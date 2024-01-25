@@ -2,7 +2,6 @@ version: '3.8'
 
 services:
 
-  # Snapshot MySQL instance
   snapshot-mysql:
     platform: linux/amd64
     container_name: snapshot-mysql
@@ -17,36 +16,6 @@ services:
     volumes:
         - "./snapshot-hub/database/:/docker-entrypoint-initdb.d/"
 
-  # Snapshot hub
-  snapshot-hub:
-    platform: linux/arm64
-    container_name: snapshot-hub
-    build:
-      context: ../modules/snapshot-hub
-      dockerfile: ../../docker/snapshot-hub/Dockerfile
-    env_file:
-      - ./snapshot-hub/.env
-    depends_on:
-      - snapshot-mysql
-    ports:
-      - "3000:3000"
-
-  # Snapshot hub
-  snapshot-seq:
-    platform: linux/arm64
-    container_name: snapshot-seq
-    build:
-      context: ../modules/snapshot-sequencer
-      dockerfile: ../../docker/snapshot-sequencer/Dockerfile
-    env_file:
-      - ./snapshot-sequencer/.env
-
-    depends_on:
-      - snapshot-mysql
-    ports:
-      - "3001:3001"
-
-  # Redis
   redis:
     platform: linux/arm64
     container_name: redis
@@ -58,17 +27,47 @@ services:
     ports:
       - 6379:6379
     volumes:
-      - ./api/.db:/data
+      - ./redis/api/.db:/data
     restart: always
     entrypoint: redis-server --appendonly yes
 
-  # Score API
+  snapshot-hub:
+    platform: linux/arm64
+    container_name: snapshot-hub
+    build:
+      context: ../modules/snapshot-hub
+      dockerfile: ../../docker/snapshot-hub/Dockerfile
+    env_file:
+      - ./snapshot-hub/.env
+    depends_on:
+      - snapshot-mysql 
+      - score-api
+    ports:
+      - "3000:3000"
+
+  snapshot-seq:
+    platform: linux/arm64
+    container_name: snapshot-seq
+    build:
+      context: ../modules/snapshot-sequencer
+      dockerfile: ../../docker/snapshot-sequencer/Dockerfile
+    env_file:
+      - ./snapshot-sequencer/.env
+    depends_on:
+      - snapshot-mysql
+      - score-api
+      - redis
+    ports:
+      - "3001:3001"
+
   score-api:
     platform: linux/arm64
     container_name: score-api
     build:
       context: ../modules/score-api
       dockerfile: ../../docker/score-api/Dockerfile
+    depends_on:
+      - redis
     ports:
       - "3003:3003"
     env_file:
