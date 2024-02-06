@@ -6,11 +6,26 @@ build:
 
 start:
 		@{ \
-			docker compose -f ./docker/docker-compose.yaml up --build -d; \
-			echo "Waiting for MySQL to start..."; \
-			sleep 15; \
+			echo "Starting databases..."; \
+			docker compose -f ./docker/docker-compose.yaml up --build -d snapshot-mysql redis keycard-mysql; \
+			echo "Waiting for databases to be ready..."; \
+			sleep 10; \
+			echo "Starting servers..."; \
+			docker compose -f ./docker/docker-compose.yaml up --build -d keycard snapshot-seq score-api; \
+			sleep 10; \
+			docker compose -f ./docker/docker-compose.yaml up --build -d snapshot-hub; \
+			echo "Waiting for servers to start..."; \
+			sleep 10; \
 			bash docker/snapshot-hub/db.sh; \
 			bash docker/snapshot-sequencer/db.sh; \
+			sleep 5; \
+			echo "Starting interface..."; \
+			docker compose -f ./docker/docker-compose.yaml up --build -d snapshot-interface; \
+		}
+
+pause:
+		@{ \
+			docker compose -f ./docker/docker-compose.yaml stop; \
 		}
 
 stop:

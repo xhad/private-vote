@@ -15,6 +15,9 @@ services:
       MYSQL_DATABASE: "snapshot"
     volumes:
         - "./snapshot-hub/database/:/docker-entrypoint-initdb.d/"
+    networks:
+      - default
+      - shared-network
 
   redis:
     platform: linux/arm64
@@ -30,6 +33,8 @@ services:
       - ./redis/api/.db:/data
     restart: always
     entrypoint: redis-server --appendonly yes
+    networks:
+      - default
 
   snapshot-hub:
     platform: linux/arm64
@@ -44,6 +49,10 @@ services:
       - score-api
     ports:
       - "3000:3000"
+    networks:
+      - default
+      - keycard-network
+      - shared-network
 
   snapshot-seq:
     platform: linux/arm64
@@ -59,6 +68,10 @@ services:
       - redis
     ports:
       - "3001:3001"
+    networks:
+      - default
+      - keycard-network
+      - shared-network
 
   score-api:
     platform: linux/arm64
@@ -72,7 +85,60 @@ services:
       - "3003:3003"
     env_file:
       - ./score-api/.env
+    networks:
+      - default
+      - keycard-network
 
+  keycard-mysql:
+    container_name: keycard-mysql
+    image: mysql:8.0
+    command: --default-authentication-plugin=mysql_native_password
+    cap_add:
+      - SYS_NICE
+    environment:
+      MYSQL_USER: "admin"
+      MYSQL_PASSWORD: "pwd"
+      MYSQL_ROOT_PASSWORD: "pwd"
+      MYSQL_DATABASE: "keycard"
+    networks:
+      - keycard-network
+    volumes:
+      - "./keycard/schema.sql:/docker-entrypoint-initdb.d/1.sql"
+      - "./keycard/seed.sql:/docker-entrypoint-initdb.d/2.sql"
+      - "./keycard/database/:/docker-entrypoint-initdb-keycard.d/"
+
+  keycard:
+    container_name: keycard
+    build:
+      context: ../modules/keycard
+      dockerfile: ../../docker/keycard/Dockerfile
+    ports:
+      - "3007:3007"
+    depends_on:
+      - keycard-mysql
+    env_file:
+      - ./keycard/.env
+    networks:
+      - default
+      - keycard-network
+
+  snapshot-interface:
+    container_name: snapshot-interface
+    build:
+      context: ../modules/snapshot
+      dockerfile: ../../docker/snapshot/Dockerfile
+    ports:
+      - "8080:8080" 
+    env_file:
+      - ./snapshot/.env
+    networks:
+      - default
+      - shared-network  
+    
 networks:
+  keycard-network:
+    name: keycard-network 
   default:
     name: snapshot-network
+  shared-network:
+    external: true  
