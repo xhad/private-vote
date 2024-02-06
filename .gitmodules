@@ -10,3 +10,6 @@
 [submodule "modules/snapshot-hub"]
 	path = modules/snapshot-hub
 	url = https://github.com/snapshot-labs/snapshot-hub
+[submodule "modules/rolling-shutter"]
+	path = modules/rolling-shutter
+	url = https://github.com/Da-colon/rolling-shutter
