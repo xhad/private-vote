@@ -12,4 +12,4 @@
 	url = https://github.com/snapshot-labs/snapshot-hub
 [submodule "modules/keycard"]
 	path = modules/keycard
-	url = https://github.com/snapshot-labs/keycard
+	url = git@github.com:snapshot-labs/keycard
